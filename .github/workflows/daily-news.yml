@@ -35,3 +35,17 @@ jobs:
         name: wordcloud-images
         path: wordcloud_*.png
         retention-days: 7
+
+    # NEW STEP: Automatically commits a heartbeat file once a week to prevent workflow disablement
+    - name: Keepalive Heartbeat
+      if: github.event_name == 'schedule' && github.event.schedule == '30 22 * * *' # Only run on scheduled trigger
+      run: |
+        # Only commit once a week (e.g., on Mondays) to avoid cluttering history
+        if [ $(date +%u) -eq 1 ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          echo "Last heartbeat: $(date)" > heartbeat.txt
+          git add heartbeat.txt
+          git commit -m "Automated activity heartbeat [skip ci]"
+          git push
+        fi
